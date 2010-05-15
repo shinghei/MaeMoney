@@ -1,0 +1,3 @@
+rsync -ah --progress /home/shing/Dev/N900/MaeMoney/src \
+   user@192.168.1.100:/home/user/apps/MaeMoney
+

@@ -1,0 +1,22 @@
+ssh-keygen -t rsa
+
+cd /home/user/MyDocs/stockmatch
+rm *.changes *.tar.gz *.dsc
+
+cd /home/user/MyDocs/stockmatch/src/opt/stockmatch
+cp /home/user/apps/MaeMoney/src/Util.py .
+cp /home/user/apps/MaeMoney/src/StockWatch*.py .
+cp /home/user/apps/MaeMoney/stockwatch.png src/usr/share/icons/.
+
+cd /home/user/MyDocs/stockmatch
+
+<EDIT build_app.py>
+update version
+update build number
+update changeloginformation
+</EDIT>
+
+python build_app.py
+
+cd /home/user/MyDocs/stockmatch/
+scp *.tar.gz *.diff.gz *.changes *.dsc shinghei@drop.maemo.org:/var/www/extras-devel/incoming-builder/fremantle/
