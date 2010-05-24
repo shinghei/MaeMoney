@@ -10,7 +10,8 @@ import traceback
 
 from StockMatchTableDelegate import StockMatchTableDelegate
 from StockMatchTableModel import StockMatchTableModel
-from StockMatchGoogleFinance import *
+from StockMatchGoogleFinance import StockMatchGoogleFinance
+import PyQt4.QtNetwork
 
 class SMMainWindow(QMainWindow):
     PROP_FINGER_SCROLLABLE = "FingerScrollable"
@@ -133,6 +134,7 @@ class SMMainWindow(QMainWindow):
         progress.setMinimum(0)
         progress.setMaximum(0)
         progress.setValue(0)
+
         matches = self.stockMatcher.match(queryString)
         if matches is None:
             self.model.clear()

@@ -3,15 +3,68 @@ from PortfolioTableModel import *
 from PortfolioListModel import *
 from RealtimeQuoter import *
 from threading import *
-from PyQt4.Qt import QProgressDialog, QThread
+from PyQt4.QtCore import qDebug, QThread, QEventLoop, SIGNAL
+from PyQt4.QtGui import QProgressDialog, QApplication
 
-class MMController:
+class MMController(QObject):
 
     def __init__(self):
         self.gDataClient = FinanceService()
         self.clientLoginToken = None
         self.quoter = ThrottledQuoter(RealtimeQuoter())
-        self.updateThreads = {}
+        self.updaters = {}
+
+    def setLoginDialog(self, loginDialog):
+        self.loginDialog = loginDialog
+        self.connect(self.loginDialog,
+                     SIGNAL("credentialsEntered(string, string)"),
+                     self.processCredentials)
+        self.connect(self.loginDialog,
+                     SIGNAL("accepted()"),
+                     self.loginAccepted)
+
+
+    def setMainWindow(self, mainWindow):
+        self.mainWindow = mainWindow
+
+        self.connect(self.mainWindow.btnLoadPortfolio,
+                     SIGNAL("clicked()"),
+                     self.loadPortfolio)
+        self.connect(self.mainWindow.portfolioListView,
+                     SIGNAL("clicked(QModelIndex)"),
+                     self.portfolioSelected)
+
+
+    def portfolioSelected(self, qModelIndex):
+        progress = QProgressDialog("Loading positions from portfolio", QString(), 0, 0, self.mainWindow)
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setMinimum(0)
+        progress.setMaximum(0)
+        progress.show()
+
+        p = self.portfolioListModel.getPortfolio(qModelIndex)
+        progress.setLabelText("Retreiving data from Google Finance")
+        self.portfolioTableModel = self.createPortfolioTableModel(p)
+        self.mainWindow.setPortfolioTableModel(self.portfolioTableModel)
+
+        progress.close()
+
+        self.mainWindow.setupSelectionModel()
+        self.mainWindow.setupPortfolioTableDelegate()
+        self.mainWindow.autoFitPortfolioTable()
+
+    def loadPortfolio(self):
+        if self.isLoggedIn():
+            progress = QProgressDialog("Bootstrapping data", QString(), 0, 100, self.mainWindow)
+            progress.setWindowModality(Qt.WindowModal)
+            self.portfolioListModel = self.createPortfolioListModel(progress)
+            self.mainWindow.setPortfolioListModel(self.portfolioListModel)
+            progress.setValue(100)
+        else:
+            self.loginDialog.show()
+
+    def loginAccepted(self):
+        self.loadPortfolio()
 
     def login(self, userName, password):
         self.userName = userName
@@ -58,6 +111,8 @@ class MMController:
 
         for pIndex in range(numPortfolios):
 
+            QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+            
             portfolio = portfolios[pIndex]
             portfolioTitle = portfolio.title.text.decode("utf-8")
 
@@ -65,9 +120,9 @@ class MMController:
                                         %(portfolioTitle, pIndex + 1, numPortfolios))
 
             portfolioId = portfolio.id.text
-            if self.updateThreads.has_key(portfolioId):
-                self.updateThreads[portfolioId].exit()
-                print "Terminating thread %s" %(portfolioId)
+            if self.updaters.has_key(portfolioId):
+                self.updaters[portfolioId].terminate()
+                qDebug("Terminating thread %s" %(portfolioId))
 
             positions = self.gDataClient.GetPositionFeed(portfolio)
             tickers = [[0 for col in range(2)] for row in range(len(positions.entry))]
@@ -77,8 +132,10 @@ class MMController:
                 tickers[i][1] = position.symbol.symbol
                 i = i + 1
 
-            self.updateThreads[portfolioId] = UpdateThread(portfolioTitle.encode('utf-8'), self.quoter, tickers)
-#            self.updateThreads[portfolioId].start()
+            self.updaters[portfolioId] = Updater(portfolioTitle.encode('utf-8'), self.quoter, tickers)
+
+            QObject.connect(self.updaters[portfolioId], SIGNAL("quotesUpdated"), self.processQuotesUpdated)
+
             progressValue = progressValue + progressValueInc
             progressDialog.setValue(progressValue)
 
@@ -89,3 +146,19 @@ class MMController:
         tm = PortfolioTableModel(array, ["Name", "Price", "Gain", "Mkt Cap"], self.quoter)
 
         return tm
+
+    def processQuotesUpdated(self):
+        print "updated"
+
+    def processCredentials(self, userName, password):
+
+        from gdata.service import BadAuthentication, CaptchaRequired
+        import base64
+        
+        try:
+            self.login(userName, password)
+            self.loginDialog.acceptCredentials(userName, password)
+        except BadAuthentication:
+            self.loginDialog.rejectCredentials("BadAuthentication: Wrong username or password.")
+        except CaptchaRequired:
+            self.loginDialog.rejectCredentials("CaptchaRequired: Wrong username or password.")

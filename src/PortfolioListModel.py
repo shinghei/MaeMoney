@@ -1,4 +1,4 @@
-from PyQt4.Qt import QAbstractListModel, QVariant, QString, Qt, QTextCodec
+from PyQt4.QtCore import QAbstractListModel, QVariant, QString, Qt, QTextCodec
 
 class PortfolioListModel(QAbstractListModel):
 

@@ -1,17 +1,15 @@
-from PyQt4 import Qt, QtCore, QtGui
-from PyQt4.Qt import *
-from PyQt4.QtGui import *
-from gdata.finance.service import *
-from gdata.service import BadAuthentication, CaptchaRequired
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import QSettings, SIGNAL
+from PyQt4.QtGui import QDialog, QDialogButtonBox, QLabel, QLineEdit, QPushButton
 import base64
+import string
 
 class MMGoogleClientLoginDialog(QDialog):
 
-    def __init__(self, parent, controller):
+    def __init__(self, parent):
 
         QDialog.__init__(self, parent)
         self.setupUi()
-        self.controller = controller
 
         self.userNameLineEdit.setFocus()
 
@@ -26,7 +24,7 @@ class MMGoogleClientLoginDialog(QDialog):
             self.loginButton.setFocus()
 
     def setupUi(self):
-        self.setWindowModality(Qt.WindowModal)
+        self.setWindowModality(QtCore.Qt.WindowModal)
         self.buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 
@@ -40,14 +38,14 @@ class MMGoogleClientLoginDialog(QDialog):
 
         self.passwordLabel = QLabel("Password")
         self.gridLayout.addWidget(self.passwordLabel, 1, 1, 1, 1)
-        self.passwordLineEdit = QtGui.QLineEdit()
+        self.passwordLineEdit = QLineEdit()
         self.passwordLineEdit.setEchoMode(QLineEdit.Password)
         self.gridLayout.addWidget(self.passwordLineEdit, 1, 2, 1, 1)
 
-        self.loginButton = QtGui.QPushButton("Login")
+        self.loginButton = QPushButton("Login")
         self.gridLayout.addWidget(self.loginButton, 2, 1, 1, 2)
 
-        self.loginErrorMsgLabel = QtGui.QLabel("")
+        self.loginErrorMsgLabel = QLabel("")
         self.gridLayout.addWidget(self.loginErrorMsgLabel, 3, 1, 1, 2)
 
         self.connect(self.buttonBox, SIGNAL("accepted()"), self.accept)
@@ -58,17 +56,16 @@ class MMGoogleClientLoginDialog(QDialog):
     def credentialsEntered(self):
         userName = self.userNameLineEdit.text().toAscii()
         password = self.passwordLineEdit.text().toAscii()
-        try:
-            self.controller.login(userName, password)
-            self.loginErrorMsgLabel.clear()
-            self.accept()
-            self.settings.setValue("username", userName)
-            self.settings.setValue("password", base64.encodestring(password))
-        except BadAuthentication:
-            self.passwordLineEdit.clear()
-            self.passwordLineEdit.setFocus()
-            self.loginErrorMsgLabel.setText("BadAuthentication: Wrong username or password.")
-        except CaptchaRequired:
-            self.passwordLineEdit.clear()
-            self.userNameLineEdit.setFocus()
-            self.loginErrorMsgLabel.setText("CaptchaRequired: Wrong username or password.")
+        self.emit(SIGNAL("credentialsEntered(string, string)"), userName, password)
+
+    def acceptCredentials(self, userName, password):
+        self.loginErrorMsgLabel.clear()
+        self.accept()
+        self.settings.setValue("username", userName)
+        self.settings.setValue("password", base64.encodestring(password))
+
+    def rejectCredentials(self, reason):
+        self.passwordLineEdit.clear()
+        self.passwordLineEdit.setFocus()
+        self.loginErrorMsgLabel.setText(reason)
+

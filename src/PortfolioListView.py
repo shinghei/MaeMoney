@@ -1,11 +1,13 @@
-from PyQt4.Qt import QListView, Qt, QAbstractItemView, QMenu, QMenu, QEvent, QEvent, QAction
+from PyQt4.QtGui import QListView, QAbstractItemView, QMenu,  QAction
+from PyQt4 import QtCore
+from PyQt4.QtCore import QEvent
 
 class PortfolioListView(QListView):
 
     def __init__(self, parent=None):
         QListView.__init__(self, parent)
 
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.viewport().installEventFilter(self)
 

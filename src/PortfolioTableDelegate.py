@@ -1,5 +1,7 @@
-from PyQt4.QtGui import QStyledItemDelegate
-from PyQt4.Qt import QFont, Qt, QStyleOptionViewItemV4, QRect, QSize, QPalette, QPen, QPen, QStyle, QStyle, QConicalGradient, QPointF, QPointF, QLinearGradient, QLinearGradient, QFontMetrics, QFontMetrics, qWarning
+from PyQt4.QtGui import QStyledItemDelegate, QFont, QStyleOptionViewItemV4, \
+                        QPalette, QPen, QStyle, QConicalGradient, QLinearGradient, \
+                        QFontMetrics
+from PyQt4.QtCore import QRect, QSize, QPointF, qWarning
 from PortfolioTableModel import *
 
 class PortfolioTableDelegate(QStyledItemDelegate):

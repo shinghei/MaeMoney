@@ -3,7 +3,7 @@
 from PyQt4.QtCore import Qt, QVariant, QModelIndex, QAbstractTableModel, qWarning
 
 class StockMatchTableModel(QAbstractTableModel):
-    HEADER = ["Ticker", "Name"]
+    HEADER = [u"代號 Ticker", u"名稱 Name"]
     COL_TICKER = 0
     COL_NAME = 1
 

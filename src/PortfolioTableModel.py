@@ -1,6 +1,7 @@
 # coding=utf-8
 
-from PyQt4.Qt import QAbstractTableModel, QVariant, Qt, QColor, QBrush
+from PyQt4.QtCore import QAbstractTableModel, QVariant, Qt
+from PyQt4.QtGui import QColor, QBrush
 import string
 
 class PortfolioTableModel(QAbstractTableModel):

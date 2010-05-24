@@ -1,14 +1,12 @@
 from PyQt4 import QtCore, QtGui
-from PyQt4.Qt import *
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from MMGoogleClientLoginDialog import MMGoogleClientLoginDialog
 from MMController import *
 from PortfolioListModel import *
-from PortfolioTableDelegate import *
 from RightClickEventHandler import *
 from PortfolioListView import *
-from PyQt4.Qt import QLabel
+from PyQt4.QtGui import QMainWindow, QLabel, QWidget
 
 class MMMainWindow(QMainWindow):
 
@@ -17,7 +15,7 @@ class MMMainWindow(QMainWindow):
     def __init__(self, controller):
         QMainWindow.__init__(self)
         self.controller = controller
-        self.loginDialog = MMGoogleClientLoginDialog(self, self.controller)
+        self.loginDialog = MMGoogleClientLoginDialog(self)
         self.setupUi()
 
     def setupUi(self):
@@ -49,61 +47,36 @@ class MMMainWindow(QMainWindow):
         self.portfolioListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
 
         self.retranslateUi()
-        self.connect(self.btnLoadPortfolio,
-                     SIGNAL("clicked()"),
-                     self.loadPortfolio)
-        self.connect(self.portfolioListView,
-                     SIGNAL("clicked(QModelIndex)"),
-                     self.portfolioSelected)
-        self.connect(self.loginDialog,
-                     SIGNAL("accepted()"),
-                     self.loginAccepted)
-       
+
     def retranslateUi(self):
         self.setWindowTitle(QApplication.translate("MMMainWindow", "MaeMoney", None, QApplication.UnicodeUTF8))
         self.btnLoadPortfolio.setText(QApplication.translate("MMMainWindow", "Load Portfolio", None, QApplication.UnicodeUTF8))
 
-    def loginAccepted(self):
-        self.loadPortfolio()
+    def setPortfolioListModel(self, model):
+        self.portfolioListView.setModel(model)
 
-    def loadPortfolio(self):
-        if self.controller.isLoggedIn():
-            # @todo WA_Maemo5ShowProgressIndicator
+    def setPortfolioTableModel(self, model):
+        self.portfolioTableModel = model
+        self.portfolioEntriesTableView.reset()
+        self.portfolioEntriesTableView.setModel(model)
 
-            progress = QProgressDialog("Bootstrapping data", QString(), 0, 100, self)
-            progress.setWindowModality(Qt.WindowModal)
-            self.portfolioListModel = self.controller.createPortfolioListModel(progress)
-            self.portfolioListView.setModel(self.portfolioListModel)
-            progress.setValue(100)
-        else:
-            self.loginDialog.show()
+    def setupPortfolioTableDelegate(self):
 
-    def portfolioSelected(self, qModelIndex):
-        progress = QProgressDialog("Loading positions from portfolio", QString(), 0, 0, self)
-        progress.setWindowModality(Qt.WindowModal)
-        progress.forceShow()
-
-        p = self.portfolioListModel.getPortfolio(qModelIndex)
-        progress.setLabelText("Retreiving data from Google Finance")
-
-        self.portfolioTableModel = self.controller.createPortfolioTableModel(p)
-
-        self.portfolioEntriesTableView.setModel(self.portfolioTableModel)
-
-        self.portfolioEntriesTableView.resizeColumnsToContents()
-
-        progress.close()
-                
-        selectionModel = self.portfolioEntriesTableView.selectionModel()
-        self.connect(selectionModel,
-                     QtCore.SIGNAL("selectionChanged(QItemSelection, QItemSelection)"),
-                     self.entrySelected)
+        from PortfolioTableDelegate import PortfolioTableDelegate
 
         self.portfolioTableDelegate = PortfolioTableDelegate()
         self.portfolioEntriesTableView.setItemDelegate(self.portfolioTableDelegate)
+
+    def autoFitPortfolioTable(self):
         self.portfolioEntriesTableView.resizeRowsToContents()
         self.portfolioEntriesTableView.resizeColumnsToContents()
-        
+
+    def setupSelectionModel(self):
+        selectionModel = self.portfolioEntriesTableView.selectionModel()
+        self.connect(selectionModel,
+                     SIGNAL("selectionChanged(QItemSelection, QItemSelection)"),
+                     self.entrySelected)
+
     def entrySelected(self, selected):
         '''
         selected (type: QItemSelection) represents the selected row
@@ -117,4 +90,6 @@ class MMMainWindow(QMainWindow):
         tickerSelected = self.portfolioTableModel.getTicker(anyCell)
         self.statusLabel.setText(tickerSelected)
 
-        
+
+
+

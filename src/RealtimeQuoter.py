@@ -1,6 +1,6 @@
 import urllib2, re, time, sys, traceback
 from Util import *
-from PyQt4.Qt import QThread, qWarning, QTimer, SIGNAL, SIGNAL, QObject
+from PyQt4.QtCore import QThread, qWarning, QTimer, SIGNAL, QObject, qDebug, pyqtSignal
 
 class Country:
     """
@@ -181,7 +181,7 @@ class UpdateThread1(QThread):
         print "[%s] Update interval: %d" %(self.name, self.currentUpdateInterval)
 
 
-class UpdateThread(QObject):
+class Updater(QObject):
     DEFAULT_UPDATE_INTERVAL_SECS = 15
     ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS = 5
 
@@ -223,21 +223,21 @@ class UpdateThread(QObject):
         self.updateQuotes()
 
     def terminate(self):
-        QObject.killTimer(self.timerId)
+        self.killTimer(self.timerId)
 
     def updateQuotes(self):
-        print "Time's up"
         self.success = True
         for exchange in self.tickersByExchange.keys():
             symbols = self.tickersByExchange[exchange]
             status = self.throttledQuoter.updateCache(exchange, symbols)
             self.success = self.success & status
+            self.emit(SIGNAL("quotesUpdated"))
 
         if not self.success:
             self.currentUpdateInterval = self.currentUpdateInterval * 2
         else:
             self.currentUpdateInterval = max(self.currentUpdateInterval / 2, self.updateInterval)
 
-        print "[%s] Update interval: %d" %(self.name, self.currentUpdateInterval)
+        qDebug("[%s] Update interval: %d" %(self.name, self.currentUpdateInterval))
 
 
