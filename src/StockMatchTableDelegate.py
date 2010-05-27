@@ -7,7 +7,24 @@ from StockMatchTableModel import *
 
 class StockMatchTableDelegate(QStyledItemDelegate):
 
-    MARGIN = 10
+    MARGIN = 5
+
+    def __init__(self):
+        QStyledItemDelegate.__init__(self)
+        self.columnWidths = {}
+        self.columnWidths[StockMatchTableModel.COL_TICKER] = 150
+        self.columnWidths[StockMatchTableModel.COL_NAME] = 400
+
+    def sizeHint(self, option, index):
+
+        textW = self.columnWidths[index.column()]
+
+        lineSpacing = option.fontMetrics.lineSpacing()
+        numLines = 2
+        delta = self.MARGIN
+
+        hint = QSize(delta + textW + delta, delta + numLines * lineSpacing + delta)
+        return hint
 
     def createLinearGradient(self, itemRect, startColor, endColor):
         '''
@@ -18,19 +35,7 @@ class StockMatchTableDelegate(QStyledItemDelegate):
         linearGradient = QLinearGradient(start, stop)
         linearGradient.setColorAt(0, startColor)
         linearGradient.setColorAt(1, endColor)
-        return linearGradient    
-
-    def sizeHint(self, option, index):
-        line1 = index.data(Qt.DisplayRole).toString()
-
-        textW = option.fontMetrics.width(line1)
-
-        lineSpacing = option.fontMetrics.lineSpacing()
-        numLines = 2
-        delta = self.MARGIN
-        hint = QSize(textW + delta, numLines * lineSpacing + delta)
-
-        return hint
+        return linearGradient
 
     def setPenColor(self, painter, color):
         highlighted = painter.pen()
@@ -46,12 +51,15 @@ class StockMatchTableDelegate(QStyledItemDelegate):
 
         itemRect = option.rect
 
+        textW = self.columnWidths[index.column()]
+
         if index.column() is StockMatchTableModel.COL_TICKER:
 
             painter.save()
 
             m = index.model()
             line1 = m.data(index, Qt.DisplayRole).toString()
+            line1 = option.fontMetrics.elidedText(line1, Qt.ElideLeft, textW)           
 
             # Paint the background first and then set the pen color
             if option.state & QStyle.State_Selected:
@@ -74,6 +82,7 @@ class StockMatchTableDelegate(QStyledItemDelegate):
 
             m = index.model()
             line1 = m.data(index, Qt.DisplayRole).toString()
+            line1 = option.fontMetrics.elidedText(line1, Qt.ElideRight, textW)
             line2 = m.data(index, StockMatchTableModel.ROLE_SUBTEXT1).toString()
 
             # Paint the background first and then set the pen color
@@ -90,7 +99,7 @@ class StockMatchTableDelegate(QStyledItemDelegate):
             numLines = 2
 
             leftMargin = self.MARGIN
-            textRect = QRect(itemRect.left() + leftMargin, itemRect.bottom() - numLines * lineSp,
+            textRect = QRect(itemRect.left() + leftMargin, itemRect.top() + self.MARGIN,
                              itemRect.width(), numLines * lineSp)
             painter.drawText(textRect, Qt.AlignTop | Qt.AlignLeft, line1)
 
