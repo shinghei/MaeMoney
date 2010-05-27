@@ -192,8 +192,11 @@ class StockMatchTableModel(QAbstractTableModel):
             return QVariant(self.HEADER[col])
         return QVariant()
 
-    def getTicker(self, index):
-        row = self.table[index.row()]
+    def getTicker(self, rowNumber):
+        '''
+        @param int row
+        '''
+        row = self.table[rowNumber]
         e = row['e']
         t = row['t']
         if t is not None and t is not "":
@@ -203,4 +206,4 @@ class StockMatchTableModel(QAbstractTableModel):
                 return t
 
         qWarning("Selected entry does not have a valid exchange or ticker.")
-
+        return ""
