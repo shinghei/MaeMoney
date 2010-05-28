@@ -4,12 +4,13 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import SIGNAL, QUrl, Qt, qDebug
 from PyQt4.QtGui import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, \
                         QLineEdit, QPushButton, QTableView, \
-                        QGridLayout
+                        QGridLayout, QMenuBar,QAction
 
 from StockMatchTableDelegate import StockMatchTableDelegate
 from StockMatchTableModel import StockMatchTableModel
 from StockMatchGoogleFinance import StockMatchGoogleFinance
 from StockMatchTableView import StockMatchTableView
+from GoogleFinanceUrlSetupDialog import GoogleFinanceUrlSetupDialog
 
 class SMMainWindow(QMainWindow):
 
@@ -56,7 +57,6 @@ class SMMainWindow(QMainWindow):
         self.vbox.addLayout(self.numPadLayout)
         self.vbox.addStretch()
 
-
         self.table = StockMatchTableView()
         self.hbox.addWidget(self.table)
         self.model = StockMatchTableModel()
@@ -88,6 +88,17 @@ class SMMainWindow(QMainWindow):
 
         self.table.resizeRowsToContents()
         self.table.resizeColumnsToContents()
+
+        changeUrlAction = QAction(u"更改Google財經網址 (Change Google Finance URL)", self)
+        self.connect(changeUrlAction, SIGNAL("triggered()"), self.changeUrl)
+
+        menuBar = QMenuBar()
+        menuBar.addAction(changeUrlAction)
+        self.setMenuBar(menuBar)
+
+    def changeUrl(self):
+        gfDialog = GoogleFinanceUrlSetupDialog(self)
+        gfDialog.show()
 
     def pressedCE(self):
         self.lineEdit.clear()
