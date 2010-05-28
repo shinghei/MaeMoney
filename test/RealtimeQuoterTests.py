@@ -6,7 +6,7 @@ class RealtimeQuoterTests(unittest.TestCase):
 
     def testSortByExchange(self):
         tickers = [["NYSE", "HBC"], ["NYSE", "GE"], ["NYSE", "GE"], ["HKG", "0005"]]
-        updateThread = UpdateThread("TestThread", None, tickers)
+        updateThread = Updater("TestThread", MockThrottledQuoter(), tickers)
         grouped = updateThread.groupTickersByExchange(tickers)
         self.assertEquals(2, len(grouped))
         self.assertEquals(["HBC", "GE", "GE"], grouped["NYSE"])
@@ -23,3 +23,8 @@ class RealtimeQuoterTests(unittest.TestCase):
     def testGetRealTimeQuotes(self):
         country = Country('big5', 'www.google.com')
         country.getRealTimeQuotes('NYSE', ['MCD'])
+
+class MockThrottledQuoter:
+
+    def updateCache(self, exchange, symbols):
+        return True
