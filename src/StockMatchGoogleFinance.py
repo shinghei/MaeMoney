@@ -1,22 +1,23 @@
 from Util import *
 import urllib2
 import urllib
+from Properties import Properties
 
 class StockMatchGoogleFinance:
     BUFFER_SIZE = 1024
-    BASE_GFINANCE_URL = "http://www.google.com.hk/finance/match?q=%s"
     NEWLINE_RE = urllib2.re.compile('\n')
     JSON_RE = urllib2.re.compile('\{[\s]*\"matches\"[\s]*:[\s]*[[\s]*\{.*\}[\s]*\].*\}')
 
-    BIG5HK_ENCODING = "big5hkscs"
-    DEFAULT_ENCODING = BIG5HK_ENCODING
 
-    def __init__(self, encoding=DEFAULT_ENCODING):
-        self.encoding = encoding
+
+    def __init__(self):
+        self.prop = Properties.instance()
 
     def getMatchesFromGFinance(self, queryString):
         encodedQueryString = urllib.quote(str(queryString))
-        url = self.BASE_GFINANCE_URL % (encodedQueryString)
+
+        gUrl = self.prop.getGoogleUrl()
+        url = "http://%s/finance/match?q=%s" % (gUrl, encodedQueryString)
         connection = urllib2.urlopen(url)
         buffer = []
         while True:
@@ -27,7 +28,8 @@ class StockMatchGoogleFinance:
         connection.close()
         fromGoogle = "".join(buffer)
 
-        fromGoogle = fromGoogle.decode(self.encoding).encode('utf-8')
+        enc = self.prop.getEncoding()
+        fromGoogle = fromGoogle.decode(enc).encode('utf-8')
 
         return fromGoogle
 
@@ -59,11 +61,11 @@ class StockMatchGoogleFinance:
                 return None
                 
         except urllib2.HTTPError:
-            print "Cannot open url for " + queryString
+            qWarning("Cannot open url for " + queryString)
             return None
         except ValueError:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             traceback.print_exception(exc_type, exc_value, exc_traceback,
                                       file=sys.stdout)
-            print "Value Error\n" + rawBuffer
+            qWarning("Value Error\n" + rawBuffer)
             return None
