@@ -1,8 +1,9 @@
 # coding=utf-8
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QTableView, QMenu, QAction
-from PyQt4.QtCore import QEvent, SIGNAL, SIGNAL, QObject, QUrl
+from PyQt4.QtGui import QTableView
+from PyQt4.QtCore import SIGNAL, QUrl
+from Properties import Properties
 
 class StockMatchTableView(QTableView):
 
@@ -10,6 +11,8 @@ class StockMatchTableView(QTableView):
 
     def __init__(self):
         QTableView.__init__(self)
+
+        self.prop = Properties.instance()
 
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -25,7 +28,9 @@ class StockMatchTableView(QTableView):
 
         tableModel = self.model()
         ticker = tableModel.getTicker(qModelIndex.row())
-        url = "http://www.google.com.hk/finance?q=%s" % (ticker)
+        googleUrl = self.prop.getGoogleUrl()
+        url = "http://%s/finance?q=%s" % (googleUrl, ticker)
+        print url
         self.openUrl(url)
 
     def openUrl(self, url):
