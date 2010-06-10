@@ -1,9 +1,8 @@
 # coding=utf-8
 
-from PyQt4 import QtGui, QtCore
-from PyQt4.QtCore import SIGNAL, QUrl, Qt, qDebug
+from PyQt4.QtCore import SIGNAL, Qt, qDebug
 from PyQt4.QtGui import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, \
-                        QLineEdit, QPushButton, QTableView, \
+                        QLineEdit, QPushButton, \
                         QGridLayout, QMenuBar,QAction
 
 from StockMatchTableDelegate import StockMatchTableDelegate
@@ -11,6 +10,7 @@ from StockMatchTableModel import StockMatchTableModel
 from StockMatchGoogleFinance import StockMatchGoogleFinance
 from StockMatchTableView import StockMatchTableView
 from GoogleFinanceUrlSetupDialog import GoogleFinanceUrlSetupDialog
+from AppLocaleSetupDialog import AppLocaleSetupDialog
 
 class SMMainWindow(QMainWindow):
 
@@ -23,7 +23,7 @@ class SMMainWindow(QMainWindow):
         self.hbox.addLayout(self.vbox)
 
         self.lineEdit = QLineEdit()
-        self.lookupButton = QPushButton(u"查詢 Lookup")
+        self.lookupButton = QPushButton(self.tr("Lookup"))
 
         self.vbox.addWidget(self.lineEdit)
         self.vbox.addWidget(self.lookupButton)
@@ -70,7 +70,7 @@ class SMMainWindow(QMainWindow):
         self.hbox.setStretchFactor(self.vbox, 1)
         self.hbox.setStretchFactor(self.table, 10)
 
-        self.setWindowTitle(u"查股坊 Stock Matcher")
+        self.setWindowTitle(self.tr("Stock Matcher"))
 
         self.connect(self.lineEdit, SIGNAL("returnPressed()"), self.lookupButton.click)
         self.connect(self.lookupButton, SIGNAL("clicked()"), self.processNewQuery)
@@ -89,12 +89,20 @@ class SMMainWindow(QMainWindow):
         self.table.resizeRowsToContents()
         self.table.resizeColumnsToContents()
 
-        changeUrlAction = QAction(u"更改Google財經網址 (Change Google Finance URL)", self)
+        changeAppLocaleAction = QAction(self.tr("Change language"), self)
+        self.connect(changeAppLocaleAction, SIGNAL("triggered()"), self.changeLocale)
+
+        changeUrlAction = QAction(self.tr("Change Google Finance URL"), self)
         self.connect(changeUrlAction, SIGNAL("triggered()"), self.changeUrl)
 
         menuBar = QMenuBar()
+        menuBar.addAction(changeAppLocaleAction)
         menuBar.addAction(changeUrlAction)
         self.setMenuBar(menuBar)
+
+    def changeLocale(self):
+        localeDialog = AppLocaleSetupDialog(self)
+        localeDialog.show()
 
     def changeUrl(self):
         gfDialog = GoogleFinanceUrlSetupDialog(self)

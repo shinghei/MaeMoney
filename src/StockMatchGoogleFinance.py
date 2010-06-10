@@ -1,17 +1,15 @@
 from Util import *
 import urllib2
 import urllib
-from Properties import Properties
+from StockMatchProperties import StockMatchProperties
 
 class StockMatchGoogleFinance:
     BUFFER_SIZE = 1024
     NEWLINE_RE = urllib2.re.compile('\n')
     JSON_RE = urllib2.re.compile('\{[\s]*\"matches\"[\s]*:[\s]*[[\s]*\{.*\}[\s]*\].*\}')
 
-
-
     def __init__(self):
-        self.prop = Properties.instance()
+        self.prop = StockMatchProperties.instance()
 
     def getMatchesFromGFinance(self, queryString):
         encodedQueryString = urllib.quote(str(queryString))

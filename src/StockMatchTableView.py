@@ -3,7 +3,7 @@
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import QTableView
 from PyQt4.QtCore import SIGNAL, QUrl
-from Properties import Properties
+from StockMatchProperties import StockMatchProperties
 
 class StockMatchTableView(QTableView):
 
@@ -12,7 +12,7 @@ class StockMatchTableView(QTableView):
     def __init__(self):
         QTableView.__init__(self)
 
-        self.prop = Properties.instance()
+        self.prop = StockMatchProperties.instance()
 
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)

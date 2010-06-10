@@ -1,18 +1,10 @@
 # coding=utf-8
-from PyQt4.QtCore import QSettings, QString, QLocale
+from PyQt4.QtCore import QSettings, QString, QLocale, QVariant
 
 class Properties:
 
-    __instance__ = None
-
-    @staticmethod
-    def instance():
-        if Properties.__instance__ is None:
-            Properties.__instance__ = Properties()
-
-        return Properties.__instance__
-
     SETTING_GOOGLE_URL = 'google.url'
+
     SETTING_GOOGLE_COUNTRY = 'google.country'
     GOOGLE_COUNTRY_CN = QString(u'简体中文 (China)')
     GOOGLE_COUNTRY_HK = QString(u'香港版 (Hong Kong)')
@@ -21,13 +13,24 @@ class Properties:
     GOOGLE_COUNTRY_US = QString(u'U.S.')
     GOOGLE_COUNTRY_DEFAULT = GOOGLE_COUNTRY_US
 
+    SETTING_APP_LOCALE = "app.locale"
+
     # See list from http://docs.python.org/library/codecs.html
     ENCODING_BIG5HK = "big5hkscs"
     ENCODING_GBK = "gbk"
     ENCODING_UTF8 = "utf_8"
 
-    def __init__(self):
-        self.qSettings = QSettings("cheungs", "Stock Matcher")
+    LANGUAGE_ZH_HK = u"中文 (香港)"
+    LANGUAGE_EN_US = "English"
+
+    LOCALE_ZH_HK = QLocale(QLocale.Chinese, QLocale.HongKong)
+    LOCALE_EN_US = QLocale(QLocale.English, QLocale.UnitedStates)
+
+    def __init__(self, application):
+        '''
+        @param application string
+        '''
+        self.qSettings = QSettings("cheungs", application)
 
         # Map locale to Google country
         self.googleCountries = {}
@@ -50,6 +53,10 @@ class Properties:
         self.encodings[self.GOOGLE_COUNTRY_CAN] = self.ENCODING_UTF8
         self.encodings[self.GOOGLE_COUNTRY_UK] = self.ENCODING_UTF8
         self.encodings[self.GOOGLE_COUNTRY_US] = self.ENCODING_UTF8
+
+        self.appLanguages = {}
+        self.appLanguages[self.LOCALE_ZH_HK.name()] = self.LANGUAGE_ZH_HK
+        self.appLanguages[self.LOCALE_EN_US.name()] = self.LANGUAGE_EN_US
 
     def clear(self):
         self.qSettings.clear()
@@ -95,4 +102,28 @@ class Properties:
     def setGoogleCountryUrl(self, gCountry, gUrl):
         self.qSettings.setValue(self.SETTING_GOOGLE_URL, QString(gUrl))
         self.qSettings.setValue(self.SETTING_GOOGLE_COUNTRY, QString(gCountry))
+
+    def setAppLocale(self, qLocale):
+        self.qSettings.setValue(self.SETTING_APP_LOCALE, qLocale)
+
+    def getAppLanguage(self):
+
+        appLocale = self.getAppLocale()
+        return self.appLanguages[appLocale.name()]
+
+    def getAppLocale(self):
+        '''
+        Precedence: QSettings -> System Locale
+        '''
+        qSetting = self.qSettings.value(self.SETTING_APP_LOCALE)
+        if qSetting is not None and \
+           not qSetting.isNull() and \
+           qSetting.type() == QVariant.Locale:
+            return qSetting.toLocale()
+        else:
+            sysLocale = QLocale.system()
+            if self.appLanguages.has_key(sysLocale.name()):
+                return sysLocale
+            else:
+                return self.LOCALE_EN_US
 
