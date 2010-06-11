@@ -1,24 +1,27 @@
-@ECHO OFF
+rem @ECHO OFF
 
-REM Make environment variable changes local to this batch file
+rem Make environment variable changes local to this batch file
 SETLOCAL
 
-set CWRSYNCHOME=C:\Program Files\cwRsync
+call C:\N900\scripts\Windows\common_env.bat
 
-REM Set CYGWIN variable to 'nontsec'. That makes sure that permissions
-REM on your windows machine are not updated as a side effect of cygwin
-REM operations.
-SET CYGWIN=nontsec
+rem Set CYGWIN variable to 'nontsec'. That makes sure that permissions
+rem on your windows machine are not updated as a side effect of cygwin
+rem operations.
+set CYGWIN=nontsec
 
-REM Make cwRsync home as a part of system PATH to find required DLLs
-SET CWOLDPATH=%PATH%
-SET PATH=%CWRSYNCHOME%\BIN;%PATH%
+rem Make cwRsync home as a part of system PATH to find required DLLs
+set CWOLDPATH=%PATH%
+set PATH=%RSYNC_DIR%;%PATH%
 
-REM Set HOME variable to your windows home directory. That makes sure 
-REM that ssh command creates known_hosts in a directory you have access.
-SET HOME=%HOMEDRIVE%%HOMEPATH%
+rem Set HOME variable to your windows home directory. That makes sure 
+rem that ssh command creates known_hosts in a directory you have access.
+set HOME=%HOMEDRIVE%%HOMEPATH%
 
-rsync.exe -ah --progress --exclude .svn /cygdrive/C/Dev/MaeMoney/src user@192.168.1.100:/home/user/apps/MaeMoney
+set MM_PC=/cygdrive/C/Dev/MaeMoney/src
+set MM_N900=/home/user/apps/MaeMoney
 
 
+
+rsync.exe -ah --progress --exclude .svn %MM_PC% user@%N900_IP%:%MM_N900%
 pause
