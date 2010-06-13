@@ -1,6 +1,6 @@
-import urllib2, re, time, sys, traceback
+import urllib2
 from Util import *
-from PyQt4.QtCore import QThread, qWarning, QTimer, SIGNAL, QObject, qDebug, pyqtSignal
+from PyQt4.QtCore import qWarning, QObject, qDebug
 
 class Country:
     """
@@ -34,6 +34,9 @@ class Country:
         return decodedStocks
 
     def getRealTimeQuotes(self, exchange, tickers):
+        '''
+        @return a list of dictionaries
+        '''
         exchangeTickers = self.mergeExchangeTickers(exchange, tickers)
         try:
             connection = urllib2.urlopen(self.baseUrl + exchangeTickers)
@@ -106,9 +109,12 @@ class ThrottledQuoter:
     def storeQuote(self, exchange, ticker, quote):
         if quote is not None:
             key = exchange + ":" + ticker
+            if self.cachedQuotes.has_key(key):
+                oldQuote = self.cachedQuotes[key]
+                oldQuote.clear()
             self.cachedQuotes[key] = quote
 
-        # ---------- Accessors ---------------
+    # ---------- Accessors ---------------
 
     def getChangePercentage(self, exchange, ticker):
         return self.cachedData(exchange, ticker, "cp")
@@ -128,77 +134,27 @@ class ThrottledQuoter:
     def getColor(self, exchange, ticker):
         return self.cachedData(exchange, ticker, "ccol")        
 
-class UpdateThread1(QThread):
-    DEFAULT_UPDATE_INTERVAL_SECS = 15
-    ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS = 5
-
-    def __init__(self, threadName, throttledQuoter, exchangeTickerTuples,
-                 updateInterval=DEFAULT_UPDATE_INTERVAL_SECS, *args):
-        self.throttledQuoter = throttledQuoter
-        self.tickersByExchange = self.groupTickersByExchange(exchangeTickerTuples)
-        self.stopped = False
-        self.updateInterval = max(self.ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS,
-                                  updateInterval)
-        self.currentUpdateInterval = self.updateInterval
-
-        apply(QThread.__init__, (self, ) + args)
-        self.name = threadName
-        print "Thread %s started" % (self.name)
-        QThread.startTimer()
-
-    def groupTickersByExchange(self, exchangeTickerTuples):
-        grouped = {}
-        for ticker in exchangeTickerTuples:
-            exchange = ticker[0]
-            symbol = ticker[1]
-            if not grouped.has_key(exchange):
-                grouped[exchange] = []
-            tickerList = grouped[exchange]
-            tickerList.append(symbol)
-
-        return grouped
-
-    def run(self):
-
-        self.success = True
-        while self.success:
-            self.updateQuotes()
-            time.sleep(self.currentUpdateInterval)
-
-    def updateQuotes(self):
-        print "Time's up"
-        self.success = True
-        for exchange in self.tickersByExchange.keys():
-            symbols = self.tickersByExchange[exchange]
-            status = self.throttledQuoter.updateCache(exchange, symbols)
-            self.success = self.success & status
-
-        if not self.success:
-            self.currentUpdateInterval = self.currentUpdateInterval * 2
-        else:
-            self.currentUpdateInterval = max(self.currentUpdateInterval / 2, self.updateInterval)
-
-        print "[%s] Update interval: %d" %(self.name, self.currentUpdateInterval)
-
-
 class Updater(QObject):
-    DEFAULT_UPDATE_INTERVAL_SECS = 15
+    DEFAULT_UPDATE_INTERVAL_SECS = 10
     ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS = 5
 
-    def __init__(self, threadName, throttledQuoter, exchangeTickerTuples,
+    def __init__(self, throttledQuoter,
                  updateInterval=DEFAULT_UPDATE_INTERVAL_SECS):
         QObject.__init__(self)
         self.throttledQuoter = throttledQuoter
-        self.tickersByExchange = self.groupTickersByExchange(exchangeTickerTuples)
         self.stopped = False
         self.updateInterval = max(self.ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS,
                                   updateInterval)
         self.currentUpdateInterval = self.updateInterval
-        self.name = threadName
+        self.exchangeTickerTuples = []
 
+    def addTickers(self, tuple):
+        self.exchangeTickerTuples.append(tuple)
+
+    def start(self):
+        self.tickersByExchange = self.groupTickersByExchange(self.exchangeTickerTuples)
         self.updateQuotes()
-
-        self.timerId = QObject.startTimer(self, self.updateInterval * 1000)
+        self.timerId = self.startTimer(self.updateInterval * 1000)
 
     def groupTickersByExchange(self, exchangeTickerTuples):
         grouped = {}
@@ -211,13 +167,6 @@ class Updater(QObject):
             tickerList.append(symbol)
 
         return grouped
-
-    def run(self):
-
-        self.success = True
-        while self.success:
-            self.updateQuotes()
-            time.sleep(self.currentUpdateInterval)
 
     def timerEvent(self, event):
         self.updateQuotes()
@@ -231,13 +180,12 @@ class Updater(QObject):
             symbols = self.tickersByExchange[exchange]
             status = self.throttledQuoter.updateCache(exchange, symbols)
             self.success = self.success & status
-            self.emit(SIGNAL("quotesUpdated"))
 
-        if not self.success:
-            self.currentUpdateInterval = self.currentUpdateInterval * 2
-        else:
+        if self.success:
+            qDebug("[Updater] success")
             self.currentUpdateInterval = max(self.currentUpdateInterval / 2, self.updateInterval)
+            self.emit(SIGNAL("quotesUpdated"))
+        else:
+            self.currentUpdateInterval = self.currentUpdateInterval * 2
 
-        qDebug("[%s] Update interval: %d" %(self.name, self.currentUpdateInterval))
-
-
+        qDebug("[Updater] interval: %d" %(self.currentUpdateInterval))

@@ -75,3 +75,37 @@ class PropertiesTests(unittest.TestCase):
         prop.setGoogleCountryUrl(u"Unknown", "what.ever")
         enc = prop.getEncoding()
         self.assertEquals(Properties.ENCODING_UTF8, enc)
+
+    def testMultipleInstances(self):
+        prop1 = Properties.instance()
+        prop2 = Properties.instance()
+
+        self.assertEquals(prop1, prop2)
+
+    def testAppLocale(self):
+        prop = Properties.instance()
+        prop.clear()
+        l = prop.getAppLocale()
+        self.assertEquals(QLocale.HongKong, l.country())
+        self.assertEquals(QLocale.Chinese, l.language())
+
+        locale = QLocale.Bangladesh
+        prop.setAppLocale(locale)
+
+        l = prop.getAppLocale()
+
+        self.assertEquals(locale, l)
+
+    def testLocales(self):
+        zh_hk = QLocale(QLocale.Chinese, QLocale.HongKong)
+        en_us = QLocale(QLocale.English, QLocale.UnitedStates)
+
+        self.assertEquals(QLocale.Chinese, zh_hk.language())
+        self.assertEquals(QLocale.HongKong, zh_hk.country())
+
+        self.assertEquals(QLocale.English, en_us.language())
+        self.assertEquals(QLocale.UnitedStates, en_us.country())
+
+        appLangs = {}
+        appLangs[zh_hk] = "zh_hk"
+        self.assertEquals(appLangs[zh_hk], "zh_hk")

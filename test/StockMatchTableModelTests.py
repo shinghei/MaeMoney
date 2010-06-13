@@ -1,8 +1,8 @@
 # coding=gbk
 
 import unittest
-from src.StockMatch import *
-import urllib
+from src.StockMatchTableModel import StockMatchTableModel
+from PyQt4.QtCore import Qt
 
 class StockMatchTableModelTests(unittest.TestCase):
 

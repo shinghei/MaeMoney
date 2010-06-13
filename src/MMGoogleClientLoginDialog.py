@@ -31,18 +31,18 @@ class MMGoogleClientLoginDialog(QDialog):
         self.gridLayout = QtGui.QGridLayout()
         self.setLayout(self.gridLayout)
 
-        self.userNameLabel = QLabel("User name")
+        self.userNameLabel = QLabel(self.tr("User name"))
         self.gridLayout.addWidget(self.userNameLabel, 0, 1, 1, 1)
         self.userNameLineEdit = QLineEdit()
         self.gridLayout.addWidget(self.userNameLineEdit, 0, 2, 1, 1)
 
-        self.passwordLabel = QLabel("Password")
+        self.passwordLabel = QLabel(self.tr("Password"))
         self.gridLayout.addWidget(self.passwordLabel, 1, 1, 1, 1)
         self.passwordLineEdit = QLineEdit()
         self.passwordLineEdit.setEchoMode(QLineEdit.Password)
         self.gridLayout.addWidget(self.passwordLineEdit, 1, 2, 1, 1)
 
-        self.loginButton = QPushButton("Login")
+        self.loginButton = QPushButton(self.tr("Login"))
         self.gridLayout.addWidget(self.loginButton, 2, 1, 1, 2)
 
         self.loginErrorMsgLabel = QLabel("")

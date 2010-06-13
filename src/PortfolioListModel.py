@@ -18,3 +18,6 @@ class PortfolioListModel(QAbstractListModel):
 
     def getPortfolio(self, qModelIndex):
         return self.portfolios[qModelIndex.row()]
+
+    def getPortfolioByRow(self, row):
+        return self.portfolios[row]

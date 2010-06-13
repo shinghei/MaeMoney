@@ -1,12 +1,11 @@
 import unittest
 from src.RealtimeQuoter import *
-from sets import Set
 
 class RealtimeQuoterTests(unittest.TestCase):
 
     def testSortByExchange(self):
         tickers = [["NYSE", "HBC"], ["NYSE", "GE"], ["NYSE", "GE"], ["HKG", "0005"]]
-        updateThread = Updater("TestThread", MockThrottledQuoter(), tickers)
+        updateThread = Updater(MockThrottledQuoter())
         grouped = updateThread.groupTickersByExchange(tickers)
         self.assertEquals(2, len(grouped))
         self.assertEquals(["HBC", "GE", "GE"], grouped["NYSE"])

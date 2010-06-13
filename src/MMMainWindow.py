@@ -1,12 +1,8 @@
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import *
-from PyQt4.QtCore import *
+from PyQt4 import  QtGui
 from MMGoogleClientLoginDialog import MMGoogleClientLoginDialog
-from MMController import *
-from PortfolioListModel import *
-from RightClickEventHandler import *
 from PortfolioListView import *
-from PyQt4.QtGui import QMainWindow, QLabel, QWidget
+from PyQt4.QtGui import QMainWindow, QLabel, QWidget, QListView, QMenuBar, QComboBox
+from PyQt4.QtCore import SIGNAL, qDebug, QObject, Qt
 
 class MMMainWindow(QMainWindow):
 
@@ -19,6 +15,49 @@ class MMMainWindow(QMainWindow):
         self.setupUi()
 
     def setupUi(self):
+        self.setupUiPortrait()
+        self.setWindowTitle(self.tr("MaeMoney"))
+
+    def setupUiPortrait(self):
+
+        self.isPortrait = True
+
+        try:
+            self.setAttribute(Qt.WA_Maemo5PortraitOrientation, True)
+        except AttributeError:
+            qDebug("Cannot set orientation to portrait")
+        self.setMaximumSize(QtCore.QSize(480, 800))
+
+        self.gridLayout = QtGui.QGridLayout()
+        widget = QWidget(self)
+        widget.setLayout(self.gridLayout)
+        self.setCentralWidget(widget)
+
+        self.btnLoadPortfolio = QtGui.QPushButton(self.tr("Sign in to Google Finance"))
+        self.gridLayout.addWidget(self.btnLoadPortfolio, 0, 0, 1, 1)
+
+        self.portfolioListView = QComboBox()
+        self.gridLayout.addWidget(self.portfolioListView, 1, 0, 1, 1)
+
+        self.positionsListView = QListView()
+        self.positionsListView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.positionsListView.setBatchSize(10)
+        self.gridLayout.addWidget(self.positionsListView, 2, 0, 1, 1)
+
+        self.positionsListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
+        self.portfolioListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
+
+        self.changeAppLocaleAction = QAction(self.tr("Change language"), self)
+        self.changeUrlAction = QAction(self.tr("Change Google Finance URL"), self)
+
+        menuBar = QMenuBar()
+        menuBar.addAction(self.changeAppLocaleAction)
+        menuBar.addAction(self.changeUrlAction)
+        self.setMenuBar(menuBar)
+
+    def setupUiLandscape(self):
+
+        self.isPortrait = True        
 
         self.setMaximumSize(QtCore.QSize(800, 480))
 
@@ -27,69 +66,69 @@ class MMMainWindow(QMainWindow):
         widget.setLayout(self.gridLayout)
         self.setCentralWidget(widget)
 
-        self.btnLoadPortfolio = QtGui.QPushButton()
-        self.gridLayout.addWidget(self.btnLoadPortfolio, 0, 0, 1, 1)
+        self.btnLoadPortfolio = QtGui.QPushButton(self.tr("Sign in to Google Finance"))
+        self.gridLayout.addWidget(self.btnLoadPortfolio, 0, 0, 1, 2)
 
         self.portfolioListView = PortfolioListView(self)
         self.gridLayout.addWidget(self.portfolioListView, 1, 0, 1, 1)
 
-        self.statusLabel = QLabel("<-- Click here to login to Google Finance")
-        self.gridLayout.addWidget(self.statusLabel, 0, 1, 1, 1)
-        self.portfolioEntriesTableView = QtGui.QTableView()
-        self.portfolioEntriesTableView.setWordWrap(True)
-        self.portfolioEntriesTableView.setMinimumWidth(600)
-        self.portfolioEntriesTableView.setSelectionMode(QtGui.QTableView.SingleSelection)
-        self.portfolioEntriesTableView.setSelectionBehavior(QtGui.QTableView.SelectRows)
-        self.portfolioEntriesTableView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.gridLayout.addWidget(self.portfolioEntriesTableView, 1, 1, 1, 1)
+        self.positionsListView = QListView()
+        self.positionsListView.setMinimumWidth(600)
+        self.positionsListView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.positionsListView.setBatchSize(10)
+#        self.positionsListView.setLayoutMode(QListView.Batched)
+#        self.setFlow(QListView.LeftToRight)
+#        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerItem)
+        self.gridLayout.addWidget(self.positionsListView, 1, 1, 1, 1)
 
-        self.portfolioEntriesTableView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
+        self.positionsListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
         self.portfolioListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
 
-        self.retranslateUi()
+        self.changeAppLocaleAction = QAction(self.tr("Change language"), self)
+        self.changeUrlAction = QAction(self.tr("Change Google Finance URL"), self)
 
-    def retranslateUi(self):
-        self.setWindowTitle(QApplication.translate("MMMainWindow", "MaeMoney", None, QApplication.UnicodeUTF8))
-        self.btnLoadPortfolio.setText(QApplication.translate("MMMainWindow", "Load Portfolio", None, QApplication.UnicodeUTF8))
+        menuBar = QMenuBar()
+        menuBar.addAction(self.changeAppLocaleAction)
+        menuBar.addAction(self.changeUrlAction)
+        self.setMenuBar(menuBar)
+
+    def removeLoginButton(self):
+        self.btnLoadPortfolio.setParent(None)
+        self.gridLayout.removeWidget(self.btnLoadPortfolio)
 
     def setPortfolioListModel(self, model):
         self.portfolioListView.setModel(model)
 
-    def setPortfolioTableModel(self, model):
-        self.portfolioTableModel = model
-        self.portfolioEntriesTableView.reset()
-        self.portfolioEntriesTableView.setModel(model)
+    def setPositionsModel(self, model):
+        oldModel = self.positionsListView.model()
+        self.positionsModel = model
+        self.positionsListView.setModel(model)
 
-    def setupPortfolioTableDelegate(self):
+        if oldModel is not None:
+            del oldModel
 
-        from PortfolioTableDelegate import PortfolioTableDelegate
+    def setupPositionsViewDelegate(self):
 
-        self.portfolioTableDelegate = PortfolioTableDelegate()
-        self.portfolioEntriesTableView.setItemDelegate(self.portfolioTableDelegate)
+        from PositionsViewDelegate import PositionsViewDelegate
 
-    def autoFitPortfolioTable(self):
-        self.portfolioEntriesTableView.resizeRowsToContents()
-        self.portfolioEntriesTableView.resizeColumnsToContents()
+        self.positionsViewDelegate = PositionsViewDelegate()
+        self.positionsListView.setItemDelegate(self.positionsViewDelegate)
 
     def setupSelectionModel(self):
-        selectionModel = self.portfolioEntriesTableView.selectionModel()
+        selectionModel = self.positionsListView.selectionModel()
         self.connect(selectionModel,
-                     SIGNAL("selectionChanged(QItemSelection, QItemSelection)"),
+                     SIGNAL("selectionChanged(QItemSelection)"),
                      self.entrySelected)
 
     def entrySelected(self, selected):
-        '''
-        selected (type: QItemSelection) represents the selected row
-        '''
+         pass
+#        self.selectedPositionIndex = selected
+#        tickerSelected = self.positionsModel.getTicker(self.selectedPositionIndex)
 
-        # Obtain a list of QModelIndex for the selected row
-        selectedIndexes = selected.indexes()
-        # Pick the first cell (doesn't matter which column)
-        anyCell = selectedIndexes[0]
-        # Now print the ticker
-        tickerSelected = self.portfolioTableModel.getTicker(anyCell)
-        self.statusLabel.setText(tickerSelected)
-
-
-
-
+    def setBusyStatus(self, busy):
+        try:
+            self.setAttribute(Qt.WA_Maemo5ShowProgressIndicator, busy)
+            from PyQt4.QtGui import QApplication
+            QApplication.processEvents()
+        except AttributeError:
+            qDebug("Can't use WA_Maemo5ShowProgressIndicator")

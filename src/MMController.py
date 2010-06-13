@@ -1,18 +1,24 @@
+# coding=utf-8
+
 from gdata.finance.service import FinanceService
-from PortfolioTableModel import *
+from PositionsModel import PositionsModel
 from PortfolioListModel import *
 from RealtimeQuoter import *
-from threading import *
-from PyQt4.QtCore import qDebug, QThread, QEventLoop, SIGNAL
+from PyQt4.QtCore import qDebug, SIGNAL
+from GoogleFinanceUrlSetupDialog import GoogleFinanceUrlSetupDialog
 from PyQt4.QtGui import QProgressDialog, QApplication
+from AppLocaleSetupDialog import AppLocaleSetupDialog
+
 
 class MMController(QObject):
 
     def __init__(self):
+        QObject.__init__(self)
         self.gDataClient = FinanceService()
         self.clientLoginToken = None
         self.quoter = ThrottledQuoter(RealtimeQuoter())
-        self.updaters = {}
+        self.updater = None
+        self.positionsModel = None
 
     def setLoginDialog(self, loginDialog):
         self.loginDialog = loginDialog
@@ -30,41 +36,68 @@ class MMController(QObject):
         self.connect(self.mainWindow.btnLoadPortfolio,
                      SIGNAL("clicked()"),
                      self.loadPortfolio)
-        self.connect(self.mainWindow.portfolioListView,
+        self.connect(self.mainWindow.positionsListView,
                      SIGNAL("clicked(QModelIndex)"),
-                     self.portfolioSelected)
+                     self.mainWindow.entrySelected)
+        self.connect(self.mainWindow.changeAppLocaleAction,
+                     SIGNAL("triggered()"),
+                     self.changeLocale)
+        self.connect(self.mainWindow.changeUrlAction,
+                     SIGNAL("triggered()"),
+                     self.changeUrl)
+        
+        if self.mainWindow.isPortrait:
+            self.connect(self.mainWindow.portfolioListView,
+                         SIGNAL("activated(int)"),
+                         self.portfolioSelectedComboBox)
+        else:
+            self.connect(self.mainWindow.portfolioListView,
+                         SIGNAL("clicked(QModelIndex)"),
+                         self.portfolioSelected)
 
+
+    def changeLocale(self):
+        localeDialog = AppLocaleSetupDialog(self.mainWindow)
+        localeDialog.show()
+
+    def changeUrl(self):
+        gfDialog = GoogleFinanceUrlSetupDialog(self.mainWindow)
+        gfDialog.show()
+
+    def portfolioSelectedComboBox(self, index):
+        self.mainWindow.setBusyStatus(True)
+        p = self.portfolioListModel.getPortfolioByRow(index)
+        self.positionsModel = self.createPositionsModel(p)
+
+        self.mainWindow.setPositionsModel(self.positionsModel)
+        self.mainWindow.setupSelectionModel()
+        self.mainWindow.setupPositionsViewDelegate()
+        self.mainWindow.setBusyStatus(False)
 
     def portfolioSelected(self, qModelIndex):
-        progress = QProgressDialog("Loading positions from portfolio", QString(), 0, 0, self.mainWindow)
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimum(0)
-        progress.setMaximum(0)
-        progress.show()
+        self.mainWindow.setBusyStatus(True)
 
         p = self.portfolioListModel.getPortfolio(qModelIndex)
-        progress.setLabelText("Retreiving data from Google Finance")
-        self.portfolioTableModel = self.createPortfolioTableModel(p)
-        self.mainWindow.setPortfolioTableModel(self.portfolioTableModel)
+        self.positionsModel = self.createPositionsModel(p)
 
-        progress.close()
-
+        self.mainWindow.setPositionsModel(self.positionsModel)
         self.mainWindow.setupSelectionModel()
-        self.mainWindow.setupPortfolioTableDelegate()
-        self.mainWindow.autoFitPortfolioTable()
+        self.mainWindow.setupPositionsViewDelegate()
+
+        self.mainWindow.setBusyStatus(False)
 
     def loadPortfolio(self):
         if self.isLoggedIn():
-            progress = QProgressDialog("Bootstrapping data", QString(), 0, 100, self.mainWindow)
-            progress.setWindowModality(Qt.WindowModal)
-            self.portfolioListModel = self.createPortfolioListModel(progress)
+            self.portfolioListModel = self.createPortfolioListModel()
             self.mainWindow.setPortfolioListModel(self.portfolioListModel)
-            progress.setValue(100)
         else:
             self.loginDialog.show()
 
     def loginAccepted(self):
+        self.mainWindow.removeLoginButton()
         self.loadPortfolio()
+        if self.mainWindow.isPortrait and self.portfolioListModel:
+            self.portfolioSelectedComboBox(0)
 
     def login(self, userName, password):
         self.userName = userName
@@ -98,63 +131,58 @@ class MMController(QObject):
 
         return portfolioPositions
 
-    def createPortfolioListModel(self, progressDialog):
-        '''
-        @param progressDialog QProgressDialog
-        '''
-        
+    def createPortfolioListModel(self):
+
         portfolios = self.getPortfolios()
         listModel = PortfolioListModel(portfolios)
         numPortfolios = len(portfolios)
-        progressValue = 0
-        progressValueInc = progressDialog.maximum() / (numPortfolios + 1)
+
+        progress = QProgressDialog(self.tr("Loading portfolios from Google"), QString(), 0, numPortfolios, self.mainWindow)
+        progress.setWindowTitle(self.tr("Loading portfolios from Google"))
+
+        if self.updater:
+            self.updater.terminate()
+            QObject.disconnect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
+
+        self.updater = Updater(self.quoter)
+        QObject.connect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
 
         for pIndex in range(numPortfolios):
 
-            QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
-            
             portfolio = portfolios[pIndex]
-            portfolioTitle = portfolio.title.text.decode("utf-8")
-
-            progressDialog.setLabelText("Loading portfolio %s (%d of %d)"
-                                        %(portfolioTitle, pIndex + 1, numPortfolios))
-
-            portfolioId = portfolio.id.text
-            if self.updaters.has_key(portfolioId):
-                self.updaters[portfolioId].terminate()
-                qDebug("Terminating thread %s" %(portfolioId))
-
             positions = self.gDataClient.GetPositionFeed(portfolio)
-            tickers = [[0 for col in range(2)] for row in range(len(positions.entry))]
-            i = 0
             for position in positions.entry:
-                tickers[i][0] = position.symbol.exchange
-                tickers[i][1] = position.symbol.symbol
-                i = i + 1
+                tickerTuple = position.symbol.exchange, position.symbol.symbol
+                self.updater.addTickers(tickerTuple)
 
-            self.updaters[portfolioId] = Updater(portfolioTitle.encode('utf-8'), self.quoter, tickers)
+            portfolioName = portfolio.title.text.decode("utf-8")
+            labelText = QString("'%s' (%d / %d)" %(portfolioName, pIndex + 1, numPortfolios))
+            progress.setLabelText(labelText)
+            progress.setValue(pIndex + 1)
+            QApplication.processEvents()
 
-            QObject.connect(self.updaters[portfolioId], SIGNAL("quotesUpdated"), self.processQuotesUpdated)
-
-            progressValue = progressValue + progressValueInc
-            progressDialog.setValue(progressValue)
+        self.updater.start()
 
         return listModel
 
-    def createPortfolioTableModel(self, portfolio):
+    def createPositionsModel(self, portfolio):
         array = self.getPortfolioPositions(portfolio)
-        tm = PortfolioTableModel(array, ["Name", "Price", "Gain", "Mkt Cap"], self.quoter)
+        pm = PositionsModel(array, self.quoter)
 
-        return tm
+        return pm
 
     def processQuotesUpdated(self):
-        print "updated"
+        qDebug("[MMController] processQuotesUpdated")
+        progress = QProgressDialog(self.tr("Updating quotes"), QString(), 0, 0, self.mainWindow)
+        progress.show()
+        if self.positionsModel:
+            self.positionsModel.emitModelReset()
+        progress.close()
 
     def processCredentials(self, userName, password):
 
         from gdata.service import BadAuthentication, CaptchaRequired
-        import base64
-        
+
         try:
             self.login(userName, password)
             self.loginDialog.acceptCredentials(userName, password)
