@@ -45,7 +45,7 @@
 <context>
     <name>MMController</name>
     <message>
-        <location filename="MMController.py" line="107"/>
+        <location filename="MMController.py" line="146"/>
         <source>Loading portfolios from Google</source>
         <translation>正在擷取投資組合</translation>
     </message>
@@ -73,17 +73,32 @@
     <message>
         <location filename="MMMainWindow.py" line="26"/>
         <source>Login</source>
-        <translation>登入</translation>
+        <translation type="obsolete">登入</translation>
     </message>
     <message>
         <location filename="MMMainWindow.py" line="32"/>
         <source>&lt;-- Click here to login to Google Finance</source>
-        <translation>&lt;-- 按此登入Google財經網</translation>
+        <translation type="obsolete">&lt;-- 按此登入Google財經網</translation>
     </message>
     <message>
-        <location filename="MMMainWindow.py" line="46"/>
+        <location filename="MMMainWindow.py" line="88"/>
         <source>Change Google Finance URL</source>
         <translation>更改Google財經網址</translation>
+    </message>
+    <message>
+        <location filename="MMMainWindow.py" line="19"/>
+        <source>MaeMoney</source>
+        <translation>MaeMoney</translation>
+    </message>
+    <message>
+        <location filename="MMMainWindow.py" line="69"/>
+        <source>Sign in to Google Finance</source>
+        <translation>登入Google財經網</translation>
+    </message>
+    <message>
+        <location filename="MMMainWindow.py" line="87"/>
+        <source>Change language</source>
+        <translation>更改語言</translation>
     </message>
 </context>
 <context>
