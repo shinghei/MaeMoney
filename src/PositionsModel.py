@@ -25,24 +25,30 @@ class PositionsModel(QAbstractListModel):
         ticker = self.getTicker(index)
 
         if role == Qt.DisplayRole:
-            return self.quoter.getFullName(exchange, ticker)
+            name = self.quoter.getFullName(exchange, ticker)
+            return name
 
         elif role == self.ROLE_TICKER:
-            return "%s:%s" %(exchange, ticker)
+            exchTicker = "%s:%s" %(exchange, ticker)
+            return exchTicker
 
         elif role == self.ROLE_CURRENT_PRICE:
-            return self.quoter.getPrice(exchange, ticker)
+            price = self.quoter.getPrice(exchange, ticker)
+            return price
 
         elif role == self.ROLE_CHANGE:
             change = self.quoter.getChange(exchange, ticker)
             changePct = self.quoter.getChangePercentage(exchange, ticker)
-            return "%s (%s)" % (change, changePct + '%')
+            if change is not None and changePct is not None:
+                return "%s (%s)" % (change, changePct + '%')
+            return ""
 
         elif role == self.ROLE_CHANGE_COLOR:
             return self.quoter.getColor(exchange, ticker)
 
         elif role == self.ROLE_MKT_CAP:
-            return self.quoter.getMarketCap(exchange, ticker)
+            mktCap = self.quoter.getMarketCap(exchange, ticker)
+            return mktCap
 
         elif role == self.ROLE_PE:
             return "PE: %.2f" % (99.99)

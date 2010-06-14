@@ -22,11 +22,6 @@ class Util:
 
     @staticmethod
     def evalJson(str, withQuotes=True):
-        '''
-        Convert \xFF's, if any, into a normal string
-        For example, the json-like string from Google Finance may look like this:
-        "McDonald\x27s Corporation"
-        '''
         try:
             if withQuotes:
                 fixed = eval('\'%s\'' %(str))

@@ -94,7 +94,7 @@ class PositionsViewDelegate(QStyledItemDelegate):
         painter.setFont(self.nameFont)
         # Shorten the company name such that long company names are not written on top of the ticker
         tickerTextW = fontMetricsTicker.width(ticker)
-        companyNameTextW = textRect.width() - tickerTextW - self.MARGIN
+        companyNameTextW = textRect.width() - tickerTextW - 2 * self.MARGIN
         companyName = fontMetricsCompanyName.elidedText(companyName, Qt.ElideRight, companyNameTextW)
         painter.drawText(textRect, Qt.AlignVCenter | Qt.AlignLeft, companyName)
         painter.setFont(self.tickerFont)

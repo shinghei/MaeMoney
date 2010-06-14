@@ -8,7 +8,7 @@ from PyQt4.QtCore import qDebug, SIGNAL
 from GoogleFinanceUrlSetupDialog import GoogleFinanceUrlSetupDialog
 from PyQt4.QtGui import QProgressDialog, QApplication
 from AppLocaleSetupDialog import AppLocaleSetupDialog
-
+from CachedStockQuoter import CachedStockQuoter
 
 class MMController(QObject):
 
@@ -16,7 +16,8 @@ class MMController(QObject):
         QObject.__init__(self)
         self.gDataClient = FinanceService()
         self.clientLoginToken = None
-        self.quoter = ThrottledQuoter(RealtimeQuoter())
+#        self.quoter = ThrottledQuoter(RealtimeQuoter())
+        self.quoter = CachedStockQuoter()
         self.updater = None
         self.positionsModel = None
 
@@ -97,7 +98,11 @@ class MMController(QObject):
         self.mainWindow.removeLoginButton()
         self.loadPortfolio()
         if self.mainWindow.isPortrait and self.portfolioListModel:
-            self.portfolioSelectedComboBox(0)
+            if self.portfolioListModel.rowCount() > 0:
+                self.portfolioSelectedComboBox(0)
+            else:
+                # @todo Inform user to create portfolio on Google Finance website.
+                qWarning("Inform user to create portfolio on Google Finance website.")
 
     def login(self, userName, password):
         self.userName = userName
@@ -144,7 +149,7 @@ class MMController(QObject):
             self.updater.terminate()
             QObject.disconnect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
 
-        self.updater = Updater(self.quoter)
+        self.updater = Updater(self.quoter)       
         QObject.connect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
 
         for pIndex in range(numPortfolios):
@@ -173,11 +178,11 @@ class MMController(QObject):
 
     def processQuotesUpdated(self):
         qDebug("[MMController] processQuotesUpdated")
-        progress = QProgressDialog(self.tr("Updating quotes"), QString(), 0, 0, self.mainWindow)
-        progress.show()
+#        progress = QProgressDialog(self.tr("Updating quotes"), QString(), 0, 0, self.mainWindow)
+#        progress.show()
         if self.positionsModel:
             self.positionsModel.emitModelReset()
-        progress.close()
+#        progress.close()
 
     def processCredentials(self, userName, password):
 

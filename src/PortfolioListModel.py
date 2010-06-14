@@ -6,7 +6,7 @@ class PortfolioListModel(QAbstractListModel):
         QAbstractListModel.__init__(self, parent, *args)
         self.portfolios = portfolios
 
-    def rowCount(self, parent):
+    def rowCount(self, parent=None):
         return len(self.portfolios)
 
     def data(self, index, role):
