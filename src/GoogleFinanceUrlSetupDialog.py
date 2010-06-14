@@ -2,7 +2,7 @@
 
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QGridLayout, QLabel, QComboBox, QPushButton
 from PyQt4.QtCore import Qt, SIGNAL
-from StockMatchProperties import StockMatchProperties
+from MaeMoneyProperties import MaeMoneyProperties
 
 class GoogleFinanceUrlSetupDialog(QDialog):
 
@@ -13,7 +13,7 @@ class GoogleFinanceUrlSetupDialog(QDialog):
 
         QDialog.__init__(self, parent)
 
-        self.prop = StockMatchProperties.instance()
+        self.prop = MaeMoneyProperties.instance()
         self.urls = {}
         self.urls[self.prop.GOOGLE_COUNTRY_HK] = 'www.google.com.hk'
         self.urls[self.prop.GOOGLE_COUNTRY_CN] = 'www.google.com.cn'

@@ -1,8 +1,8 @@
 # coding=utf-8
 
 from PyQt4.QtGui import QDialog, QDialogButtonBox, QGridLayout, QLabel, QComboBox, QPushButton
-from PyQt4.QtCore import Qt, SIGNAL, qDebug
-from StockMatchProperties import StockMatchProperties
+from PyQt4.QtCore import Qt, SIGNAL
+from MaeMoneyProperties import MaeMoneyProperties
 
 class AppLocaleSetupDialog(QDialog):
 
@@ -10,7 +10,7 @@ class AppLocaleSetupDialog(QDialog):
 
         QDialog.__init__(self, parent)
 
-        self.prop = StockMatchProperties.instance()
+        self.prop = MaeMoneyProperties.instance()
         self.locales = {}
         self.locales[self.prop.LANGUAGE_ZH_HK] = self.prop.LOCALE_ZH_HK
         self.locales[self.prop.LANGUAGE_EN_US] = self.prop.LOCALE_EN_US
