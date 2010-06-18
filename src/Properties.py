@@ -26,6 +26,12 @@ class Properties:
     LOCALE_ZH_HK = QLocale(QLocale.Chinese, QLocale.HongKong)
     LOCALE_EN_US = QLocale(QLocale.English, QLocale.UnitedStates)
 
+    SETTING_IS_PORTRAIT_MODE = "is_portrait_mode"
+    DEFAULT_IS_PORTRAIT_MODE = True
+
+    SETTING_UPDATE_INTERVAL = "update_interval"
+    DEFAULT_UPDATE_INTERVAL = 8
+
     def __init__(self, application):
         '''
         @param application string
@@ -127,3 +133,24 @@ class Properties:
             else:
                 return self.LOCALE_EN_US
 
+    def isPortraitMode(self):
+
+        qSetting = self.qSettings.value(self.SETTING_IS_PORTRAIT_MODE)
+        if qSetting is not None and not qSetting.isNull():
+            return qSetting.toBool()
+
+        return self.DEFAULT_IS_PORTRAIT_MODE
+
+    def setPortraitMode(self, trueFalse):
+        self.qSettings.setValue(self.SETTING_IS_PORTRAIT_MODE, trueFalse)
+
+    def getUpdateInterval(self):
+
+        qSetting = self.qSettings.value(self.SETTING_UPDATE_INTERVAL)
+        if qSetting is not None and not qSetting.isNull():
+            return qSetting.toInt()[0]
+
+        return self.DEFAULT_UPDATE_INTERVAL
+
+    def setUpdateInterval(self, updateInterval):
+        self.qSettings.setValue(self.SETTING_UPDATE_INTERVAL, updateInterval)
