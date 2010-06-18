@@ -85,6 +85,9 @@ class MMMainWindow(QMainWindow):
             self.resize(480, 800)
             self.changeOrientationAction.setText(self.switchToLandscapeText)
 
+        self.positionsListView.reset()
+
+
     def removeLoginButton(self):
         self.btnLoadPortfolio.setParent(None)
         self.gridLayout.removeWidget(self.btnLoadPortfolio)
