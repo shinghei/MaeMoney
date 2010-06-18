@@ -9,6 +9,7 @@ from GoogleFinanceUrlSetupDialog import GoogleFinanceUrlSetupDialog
 from PyQt4.QtGui import QProgressDialog, QApplication
 from AppLocaleSetupDialog import AppLocaleSetupDialog
 from CachedStockQuoter import CachedStockQuoter
+from UpdateIntervalDialog import UpdateIntervalDialog
 
 class MMController(QObject):
 
@@ -16,7 +17,6 @@ class MMController(QObject):
         QObject.__init__(self)
         self.gDataClient = FinanceService()
         self.clientLoginToken = None
-#        self.quoter = ThrottledQuoter(RealtimeQuoter())
         self.quoter = CachedStockQuoter()
         self.updater = None
         self.positionsModel = None
@@ -30,32 +30,43 @@ class MMController(QObject):
                      SIGNAL("accepted()"),
                      self.loginAccepted)
 
-
     def setMainWindow(self, mainWindow):
         self.mainWindow = mainWindow
 
         self.connect(self.mainWindow.btnLoadPortfolio,
                      SIGNAL("clicked()"),
                      self.loadPortfolio)
+
         self.connect(self.mainWindow.positionsListView,
-                     SIGNAL("clicked(QModelIndex)"),
-                     self.mainWindow.entrySelected)
+                     SIGNAL("doubleClicked(QModelIndex)"),
+                     self.mainWindow.positionDoubleClicked)
+
+        self.connect(self.mainWindow.portfolioListView,
+                     SIGNAL("activated(int)"),
+                     self.portfolioSelectedComboBox)
+
         self.connect(self.mainWindow.changeAppLocaleAction,
                      SIGNAL("triggered()"),
                      self.changeLocale)
+
         self.connect(self.mainWindow.changeUrlAction,
                      SIGNAL("triggered()"),
                      self.changeUrl)
-        
-        if self.mainWindow.isPortrait:
-            self.connect(self.mainWindow.portfolioListView,
-                         SIGNAL("activated(int)"),
-                         self.portfolioSelectedComboBox)
-        else:
-            self.connect(self.mainWindow.portfolioListView,
-                         SIGNAL("clicked(QModelIndex)"),
-                         self.portfolioSelected)
 
+        self.connect(self.mainWindow.changeOrientationAction,
+                     SIGNAL("triggered()"),
+                     self.changeOrientation)
+
+        self.connect(self.mainWindow.changeUpdateIntervalAction,
+                     SIGNAL("triggered()"),
+                     self.changeUpdateInterval)
+
+    def changeUpdateInterval(self):
+        updateIntervalDialog = UpdateIntervalDialog(self.mainWindow, self.updater)
+        updateIntervalDialog.show()
+
+    def changeOrientation(self):
+        self.mainWindow.changeOrientation()
 
     def changeLocale(self):
         localeDialog = AppLocaleSetupDialog(self.mainWindow)
@@ -71,7 +82,6 @@ class MMController(QObject):
         self.positionsModel = self.createPositionsModel(p)
 
         self.mainWindow.setPositionsModel(self.positionsModel)
-        self.mainWindow.setupSelectionModel()
         self.mainWindow.setupPositionsViewDelegate()
         self.mainWindow.setBusyStatus(False)
 
@@ -97,7 +107,7 @@ class MMController(QObject):
     def loginAccepted(self):
         self.mainWindow.removeLoginButton()
         self.loadPortfolio()
-        if self.mainWindow.isPortrait and self.portfolioListModel:
+        if self.portfolioListModel:
             if self.portfolioListModel.rowCount() > 0:
                 self.portfolioSelectedComboBox(0)
             else:
@@ -147,7 +157,7 @@ class MMController(QObject):
 
         if self.updater:
             self.updater.terminate()
-            QObject.disconnect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
+            self.disconnect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
 
         self.updater = Updater(self.quoter)       
         QObject.connect(self.updater, SIGNAL("quotesUpdated"), self.processQuotesUpdated)
@@ -178,11 +188,8 @@ class MMController(QObject):
 
     def processQuotesUpdated(self):
         qDebug("[MMController] processQuotesUpdated")
-#        progress = QProgressDialog(self.tr("Updating quotes"), QString(), 0, 0, self.mainWindow)
-#        progress.show()
         if self.positionsModel:
             self.positionsModel.emitModelReset()
-#        progress.close()
 
     def processCredentials(self, userName, password):
 
