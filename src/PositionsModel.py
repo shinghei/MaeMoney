@@ -1,5 +1,5 @@
 from PyQt4.QtCore import QAbstractListModel
-from PyQt4.QtCore import Qt, QVariant, qDebug, SIGNAL, QModelIndex
+from PyQt4.QtCore import Qt, QVariant, qDebug, SIGNAL, QModelIndex, QString
 import PyQt4.QtGui
 
 class PositionsModel(QAbstractListModel):
@@ -10,6 +10,9 @@ class PositionsModel(QAbstractListModel):
     ROLE_CHANGE_COLOR  = Qt.UserRole + 4
     ROLE_MKT_CAP       = Qt.UserRole + 5
     ROLE_PE            = Qt.UserRole + 6
+    ROLE_DELAY         = Qt.UserRole + 7
+    ROLE_DAILY_VOL     = Qt.UserRole + 8
+    ROLE_AVG_VOL       = Qt.UserRole + 9
 
     def __init__(self, inputArray, quoter, parent=None, *args):
         QAbstractListModel.__init__(self, parent, *args)
@@ -51,7 +54,24 @@ class PositionsModel(QAbstractListModel):
             return mktCap
 
         elif role == self.ROLE_PE:
-            return "PE: %.2f" % (99.99)
+            peRatio = self.quoter.getPeRatio(exchange, ticker)
+            return peRatio
+
+        elif role == self.ROLE_DELAY:
+            delay = self.quoter.getDelay(exchange, ticker)
+            return delay
+
+        elif role == self.ROLE_DAILY_VOL:
+            vol = self.quoter.getVolume(exchange, ticker)
+            if vol is not None:
+                return vol
+            return ""
+
+        elif role == self.ROLE_AVG_VOL:
+            avgVol = self.quoter.getAverageVolume(exchange, ticker)
+            if avgVol is not None:
+                return avgVol
+            return ""
 
         else:
             return QVariant()
