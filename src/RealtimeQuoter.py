@@ -2,21 +2,27 @@
 
 from Util import *
 from PyQt4.QtCore import QObject, qDebug, SIGNAL
+from MaeMoneyProperties import MaeMoneyProperties
 
 class Updater(QObject):
     DEFAULT_UPDATE_INTERVAL_SECS = 8
     ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS = 5
 
-    def __init__(self, throttledQuoter,
-                 updateInterval=DEFAULT_UPDATE_INTERVAL_SECS):
+    def __init__(self, throttledQuoter):
         QObject.__init__(self)
+        self._isRunning = False
         self.throttledQuoter = throttledQuoter
-        self.stopped = False
-        self.updateInterval = max(self.ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS,
-                                  updateInterval)
-        self.currentUpdateInterval = self.updateInterval
+        self.setUpdateInterval(MaeMoneyProperties.instance().getUpdateInterval())
         self.exchangeTickerTuples = []
         self.connect(self.throttledQuoter, SIGNAL("quotesCached"), self.quotesUpdated)
+
+    def setUpdateInterval(self, interval):
+        if interval == 0:
+            self.updateInterval = 0
+        else:
+            self.updateInterval = max(self.ABSOLUTE_MINIMUM_UPDATE_INTERVAL_SECS,
+                                      interval)
+        self.currentUpdateInterval = self.updateInterval
 
     def addTickers(self, tuple):
         self.exchangeTickerTuples.append(tuple)
@@ -24,7 +30,11 @@ class Updater(QObject):
     def start(self):
         self.tickersByExchange = self.groupTickersByExchange(self.exchangeTickerTuples)
         self.updateQuotes()
-        self.timerId = self.startTimer(self.updateInterval * 1000)
+        if self.updateInterval > 0:
+            self.timerId = self.startTimer(self.updateInterval * 1000)
+            self._isRunning = True
+        else:
+            qDebug("Timer not started.")
 
     def groupTickersByExchange(self, exchangeTickerTuples):
         grouped = {}
@@ -42,24 +52,20 @@ class Updater(QObject):
         self.updateQuotes()
 
     def terminate(self):
-        self.killTimer(self.timerId)
+        if self._isRunning:
+            self.killTimer(self.timerId)
+            self._isRunning = False
 
     def updateQuotes(self):
-#        self.success = True
         for exchange in self.tickersByExchange.keys():
             qDebug("Getting quotes for exchange: %s" %(exchange))
             symbols = self.tickersByExchange[exchange]
             self.throttledQuoter.updateCache(exchange, symbols)
-#            self.success = self.success & status
-
-#        if self.success:
-#            qDebug("[Updater] success")
-#            self.currentUpdateInterval = max(self.currentUpdateInterval / 2, self.updateInterval)
-#            self.emit(SIGNAL("quotesUpdated"))
-#        else:
-#            self.currentUpdateInterval = self.currentUpdateInterval * 2
 
         qDebug("[Updater] interval: %d" % (self.currentUpdateInterval))
+
+    def isRunning(self):
+        return self._isRunning
 
     def quotesUpdated(self):
         self.emit(SIGNAL("quotesUpdated"))
