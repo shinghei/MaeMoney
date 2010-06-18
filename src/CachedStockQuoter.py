@@ -22,6 +22,7 @@ class CachedStockQuoter(QObject):
     def updateCache(self, exchange, symbols):
         concatTickers = self.mergeExchangeTickers(exchange, symbols)
         gUrl = self.prop.getGoogleUrl()
+        qDebug("[CachedStockQuoter] Google URL: %s" %(gUrl))
         url = self.baseUrl %(gUrl, concatTickers)
         self.initiateGetQuote(url)
 
@@ -41,7 +42,6 @@ class CachedStockQuoter(QObject):
         '''
         @param reply QNetworkReply
         '''
-        qDebug("replyFinished")
         payload = reply.readAll().data()
         reply.deleteLater()
 
@@ -109,6 +109,17 @@ class CachedStockQuoter(QObject):
     def getColor(self, exchange, ticker):
         return self.cachedData(exchange, ticker, "ccol")
 
+    def getPeRatio(self, exchange, ticker):
+        return self.cachedData(exchange, ticker, "pe")
+
+    def getDelay(self, exchange, ticker):
+        return self.cachedData(exchange, ticker, "delay")
+
+    def getVolume(self, exchange, ticker):
+        return self.cachedData(exchange, ticker, "vo")
+
+    def getAverageVolume(self, exchange, ticker):
+        return self.cachedData(exchange, ticker, "avvo")
 
 if __name__ == '__main__':
     qtApp = QCoreApplication(sys.argv)
