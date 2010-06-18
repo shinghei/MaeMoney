@@ -1,6 +1,6 @@
 import re
 import sys
-from PyQt4.QtCore import qWarning
+from PyQt4.QtCore import qWarning, QUrl
 import traceback
 
 class Util:
@@ -82,3 +82,18 @@ class Util:
             import simplejson
             decodedStocks = simplejson.loads(rawData, encoding)
         return decodedStocks
+
+    @staticmethod
+    def openUrl(url):
+        import os
+
+        if os.name == 'posix':
+            os.system('dbus-send --type=method_call --dest=com.nokia.osso_browser \
+                       /com/nokia/osso_browser/request \
+                       com.nokia.osso_browser.open_new_window \
+                       string:%s' % (url))
+        else:
+            from PyQt4.Qt import QDesktopServices
+
+            url = QUrl(url, QUrl.TolerantMode)
+            QDesktopServices.openUrl(url)
