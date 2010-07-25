@@ -25,6 +25,8 @@ class MMGoogleClientLoginDialog(QDialog):
 
     def setupUi(self):
         self.setWindowModality(QtCore.Qt.WindowModal)
+
+        self.setWindowTitle(self.tr("Login to Google Finance"))
         self.buttonBox = QtGui.QDialogButtonBox(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
 
@@ -54,15 +56,15 @@ class MMGoogleClientLoginDialog(QDialog):
         self.connect(self.passwordLineEdit, SIGNAL("returnPressed()"), self.loginButton.click)
 
     def credentialsEntered(self):
-        userName = self.userNameLineEdit.text().toAscii()
-        password = self.passwordLineEdit.text().toAscii()
-        self.emit(SIGNAL("credentialsEntered(string, string)"), userName, password)
+        userName = self.userNameLineEdit.text()
+        password = self.passwordLineEdit.text()
+        self.emit(SIGNAL("credentialsEntered(QString, QString)"), userName, password)
 
     def acceptCredentials(self, userName, password):
         self.loginErrorMsgLabel.clear()
         self.accept()
         self.settings.setValue("username", userName)
-        self.settings.setValue("password", base64.encodestring(password))
+        self.settings.setValue("password", base64.encodestring(password.toAscii()))
 
     def rejectCredentials(self, reason):
         self.passwordLineEdit.clear()
