@@ -1,6 +1,6 @@
 from PyQt4.QtGui import QStyledItemDelegate, QFontMetrics, QLinearGradient, QFont, QPen, \
-                        QStyle, QColor,QTextDocument,QTextOption
-from PyQt4.QtCore import QPointF, Qt, QRect, QSize, qDebug, QObject, QString, QRectF
+                        QStyle, QColor
+from PyQt4.QtCore import QPointF, Qt, QRect, QSize, QObject, QString
 
 from PositionsModel import PositionsModel
 from MaeMoneyProperties import MaeMoneyProperties
