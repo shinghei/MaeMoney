@@ -39,7 +39,7 @@ class UtilTests(unittest.TestCase):
         f = open('matches-0005.txt', 'r')
         s = f.read()
 
-        gf = StockMatchGoogleFinance('utf-8')
+        gf = StockMatchGoogleFinance()
         cleaned = gf.cleanUpDataFromGoogle(s)
         json = gf.convertToJson(cleaned)
         self.assertTrue(json['matches'] is not None)
@@ -49,5 +49,21 @@ class UtilTests(unittest.TestCase):
         matches = gf.match("HKG:0005")
         self.assertEquals(1, len(matches))
         sugg = matches[0]['sugg']
-        print sugg[2]
-        print sugg[3]
+        self.assertEquals("0005", sugg[1])
+
+    def testLoadJsonString(self):
+        f = open('quotes.txt', 'r')
+        s = f.read()
+
+        decoded = Util.loadsJsonString(s, 'big5')
+        print decoded
+
+    def testExtractDate(self):
+        dateStr = '2010-07-08T123234235'
+        extracted = Util.extractDate(dateStr)
+
+        self.assertEquals('2010-07-08', extracted)
+
+        dateStr = '2010-07-xxT12341234'
+        extracted = Util.extractDate(dateStr)
+        self.assertEquals(None, extracted)
