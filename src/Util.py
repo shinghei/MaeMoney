@@ -9,6 +9,18 @@ class Util:
     HTMLCODE_PATTERN = re.compile('&#[0-9][0-9][0-9][0-9][0-9];')
     TRUE_FALSE_PATTERN = re.compile('(true)|(false)')
     NEWLINE_RE_PATTERN = re.compile('\n')
+    DATE_RE_PATTERN = re.compile('[0-9][0-9][0-9][0-9]\-[0-9][0-9]\-[0-9][0-9]')
+
+    @staticmethod
+    def extractDate(str):
+        if str is None:
+            return None
+
+        matches = Util.DATE_RE_PATTERN.search(str)
+        if matches is None:
+            return None
+
+        return matches.group(0)
 
     @staticmethod
     def removeNewLine(str):
