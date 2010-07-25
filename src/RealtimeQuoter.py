@@ -1,6 +1,5 @@
 # coding=utf-8
 
-from Util import *
 from PyQt4.QtCore import QObject, qDebug, SIGNAL
 from MaeMoneyProperties import MaeMoneyProperties
 
