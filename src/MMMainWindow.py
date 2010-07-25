@@ -4,6 +4,7 @@ from PortfolioListView import *
 from PyQt4.QtGui import QMainWindow, QWidget, QListView, QMenuBar, QComboBox, QGridLayout
 from PyQt4.QtCore import qDebug
 from MaeMoneyProperties import MaeMoneyProperties
+from PositionWindow import PositionWindow
 from Util import Util
 
 class MMMainWindow(QMainWindow):
@@ -15,8 +16,9 @@ class MMMainWindow(QMainWindow):
     http://doc.qt.nokia.com/qt-maemo-4.6/qt.html#WidgetAttribute-enum
     '''
     
-    WA_Maemo5LandscapeOrientation = 129
+    WA_Maemo5StackedWindow = 127
     WA_Maemo5PortraitOrientation = 128
+    WA_Maemo5LandscapeOrientation = 129
     WA_Maemo5AutoOrientation = 130
     WA_Maemo5ShowProgressIndicator = 131
 
@@ -54,7 +56,7 @@ class MMMainWindow(QMainWindow):
         self.portfolioListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
 
         # Positions within the selected portfolio
-        self.positionsListView = QListView()
+        self.positionsListView = PortfolioListView(self)
         self.positionsListView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.positionsListView.setProperty(self.PROP_FINGER_SCROLLABLE, True)
 
@@ -127,14 +129,29 @@ class MMMainWindow(QMainWindow):
         except AttributeError:
             qDebug("Can't set attribute %d" %(attribute))
 
-    def positionDoubleClicked(self, modelIndex):
+    def showTransactionsForPosition(self, modelIndex):
         '''
         @param QModelIndex modelIndex
         '''
 
         exchange = self.positionsModel.getExchange(modelIndex)
         ticker = self.positionsModel.getTicker(modelIndex)
-        exchangeTicker = "%s:%s" % (exchange, ticker)
+        position = self.positionsModel.getPositionData(modelIndex)
+
+        self.setAttributeAndCatch(self.WA_Maemo5StackedWindow, True)
+        transactionModel = self.controller.createTransactionModel(position)
+        positionWin = PositionWindow(self, exchange, ticker, transactionModel)
+        positionWin.show()
+
+    def openWebpageForPosition(self, modelIndex):
+        '''
+        @param QModelIndex modelIndex
+        '''
+
+        exchange = self.positionsModel.getExchange(modelIndex)
+        ticker = self.positionsModel.getTicker(modelIndex)
+        exchangeTicker = "%s:%s" %(exchange, ticker)
+
         googleUrl = self.prop.getGoogleUrl()
         url = "http://%s/finance?q=%s" % (googleUrl, exchangeTicker)
         qDebug("Opening URL: %s" %(url))
