@@ -12,6 +12,7 @@ class AppLocaleSetupDialog(QDialog):
 
         self.prop = MaeMoneyProperties.instance()
         self.locales = {}
+        self.locales[self.prop.LANGUAGE_ZH_CN] = self.prop.LOCALE_ZH_CN
         self.locales[self.prop.LANGUAGE_ZH_HK] = self.prop.LOCALE_ZH_HK
         self.locales[self.prop.LANGUAGE_EN_US] = self.prop.LOCALE_EN_US
 
