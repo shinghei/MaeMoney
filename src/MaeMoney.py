@@ -19,6 +19,36 @@ class MaeMoney:
 
 qtApp = QApplication(sys.argv)
 qtApp.setProperty("FingerScrollBars", False)
+qtApp.setStyleSheet("\
+                QHeaderView::section { \
+                  background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, \
+                                    stop: 0   #616161, stop: 0.5 #505050, \
+                                    stop: 0.6 #333333, stop: 1   #656565); \
+                  font-size: 18px; \
+                  border: 1px solid #616161; \
+                } \
+                \
+                QTableView { \
+                  font-size: 18px;\
+                  background-color: #616161; \
+                  border: 1px solid #616161; \
+                } \
+                \
+                QTableView::item { \
+                  background-color: white; \
+                  color: #333333; \
+                  selection-color: #ffffff; \
+                  border: 1px solid #616161; \
+                  padding: 8px; \
+                } \
+                \
+                QTableView::item:selected { \
+                  color: #ffffff; \
+                  background-color: qlineargradient(x1: 0, y1: 0.5, x2: 1, y2: 0.5,\
+                                                    stop: 0   #007000, stop: 0.1 #00bc00, \
+                                                    stop: 0.9 #00cf00, stop: 1   #008000); \
+                } \
+                ")
 
 # Find out the directory of this file, which has the localization files
 # (Could have used QCoreApplication.applicationFilePath but it only
