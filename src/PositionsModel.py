@@ -84,6 +84,13 @@ class PositionsModel(QAbstractListModel):
         ticker = self.inputArray[index.row()]['ticker']
         return ticker
 
+    '''
+    @return PositionData
+    '''
+    def getPositionData(self, index):
+        positionData = self.inputArray[index.row()]['position']
+        return positionData
+
     def emitModelReset(self):
 
         for i in range(self.rowCount()):
