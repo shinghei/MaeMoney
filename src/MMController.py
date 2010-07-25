@@ -10,6 +10,7 @@ from PyQt4.QtGui import QProgressDialog, QApplication
 from AppLocaleSetupDialog import AppLocaleSetupDialog
 from CachedStockQuoter import CachedStockQuoter
 from UpdateIntervalDialog import UpdateIntervalDialog
+from TransactionsModel import TransactionsModel
 
 class MMController(QObject):
 
@@ -24,7 +25,7 @@ class MMController(QObject):
     def setLoginDialog(self, loginDialog):
         self.loginDialog = loginDialog
         self.connect(self.loginDialog,
-                     SIGNAL("credentialsEntered(string, string)"),
+                     SIGNAL("credentialsEntered(QString, QString)"),
                      self.processCredentials)
         self.connect(self.loginDialog,
                      SIGNAL("accepted()"),
@@ -39,7 +40,7 @@ class MMController(QObject):
 
         self.connect(self.mainWindow.positionsListView,
                      SIGNAL("doubleClicked(QModelIndex)"),
-                     self.mainWindow.positionDoubleClicked)
+                     self.mainWindow.showTransactionsForPosition)
 
         self.connect(self.mainWindow.portfolioListView,
                      SIGNAL("activated(int)"),
@@ -141,10 +142,22 @@ class MMController(QObject):
             portfolioPositions[i]['name'] = position.symbol.full_name
             portfolioPositions[i]['change'] = "0.0"
             portfolioPositions[i]['changePct'] = "0.0%"
+            # Save the position object such that transactions can be fetched later on
+            portfolioPositions[i]['position'] = position
 
             i = i + 1
 
         return portfolioPositions
+
+    '''
+    @param positionData - PostionData
+    @return TransactionsModel
+    '''
+    def createTransactionModel(self, positionData):
+        transactionFeed = self.gDataClient.GetTransactionFeed(positionData)
+        transactions = transactionFeed.entry
+        transactionModel = TransactionsModel(transactions)
+        return transactionModel
 
     def createPortfolioListModel(self):
 
