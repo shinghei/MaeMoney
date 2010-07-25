@@ -10,7 +10,8 @@ from PyQt4.QtGui import QProgressDialog, QApplication
 from AppLocaleSetupDialog import AppLocaleSetupDialog
 from CachedStockQuoter import CachedStockQuoter
 from UpdateIntervalDialog import UpdateIntervalDialog
-from TransactionsModel import TransactionsModel
+from TransactionsModelPortrait import TransactionsModelPortrait
+from TransactionsModelLandscape import TransactionsModelLandscape
 
 class MMController(QObject):
 
@@ -155,8 +156,13 @@ class MMController(QObject):
     '''
     def createTransactionModel(self, positionData):
         transactionFeed = self.gDataClient.GetTransactionFeed(positionData)
+        # list of gdata.finance.TransactionEntry objects
         transactions = transactionFeed.entry
-        transactionModel = TransactionsModel(transactions)
+        prop = MaeMoneyProperties.instance()
+        if prop.isPortraitMode():
+            transactionModel = TransactionsModelPortrait(transactions)
+        else:
+            transactionModel = TransactionsModelLandscape(transactions)
         return transactionModel
 
     def createPortfolioListModel(self):
