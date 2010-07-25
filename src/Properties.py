@@ -20,9 +20,11 @@ class Properties:
     ENCODING_GBK = "gbk"
     ENCODING_UTF8 = "utf_8"
 
-    LANGUAGE_ZH_HK = u"中文 (香港)"
+    LANGUAGE_ZH_CN = u"简体中文"
+    LANGUAGE_ZH_HK = u"繁體中文"
     LANGUAGE_EN_US = "English"
 
+    LOCALE_ZH_CN = QLocale(QLocale.Chinese, QLocale.China)
     LOCALE_ZH_HK = QLocale(QLocale.Chinese, QLocale.HongKong)
     LOCALE_EN_US = QLocale(QLocale.English, QLocale.UnitedStates)
 
@@ -61,6 +63,7 @@ class Properties:
         self.encodings[self.GOOGLE_COUNTRY_US] = self.ENCODING_UTF8
 
         self.appLanguages = {}
+        self.appLanguages[self.LOCALE_ZH_CN.name()] = self.LANGUAGE_ZH_CN
         self.appLanguages[self.LOCALE_ZH_HK.name()] = self.LANGUAGE_ZH_HK
         self.appLanguages[self.LOCALE_EN_US.name()] = self.LANGUAGE_EN_US
 
